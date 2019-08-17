@@ -10,6 +10,7 @@
   function make(data, attribute) {
     return Object.assign({}, data, attribute);
   }
+  
   function Pit(val)
   {
     return Math.sqrt(Math.pow(size,2)-Math.pow(val,2));
@@ -26,8 +27,28 @@
   {
     return Redondear(Math.sqrt(Math.pow(val,2)/2));
   }
+  function reSnake(snake,dir)
+  {
+    if(isEmpty(snake))
+    {
+      return [];
+    }
+    return cons({x: first(snake).x + first(snake).dirección.x, y: first(snake).y + first(snake).dirección.y, dirección: dir},reSnake(rest(snake),first(snake).dirección));
+  }
+  function last(list)
+  {
+    if(length(list)==1)
+    {
+      return first(list);
+    }
+    return last(rest(list));
+  }
+  function opposite(val)
+  {
+    return -val;
+  }
   const size=10;
-  const snake=[{x: 100, y:100, dirección: {x: size,y: 0}},{x: 90, y:100, dirección: {x: size,y: 0}},{x: 80, y:100, dirección: {x: size,y: 0}},{x: 70, y:100, dirección: {x: size,y: 0}}]
+  const snake=[{x: 100, y:100, dirección: {x: size,y: 0}},{x: 100-size, y:100, dirección: {x: size,y: 0}},{x: 100-2*size, y:100, dirección: {x: size,y: 0}},{x: 100-3*size, y:100, dirección: {x: size,y: 0}}]
   function sketchProc(processing) {
 
     /**
@@ -35,7 +56,7 @@
      */
     processing.setup = function () {
       processing.frameRate(10);
-      processing.size(400, 400);
+      processing.size(1000, 800);
       processing.background(10, 200, 50);
       processing.state = { x: 100, y: 100, ancho: size, alto: size ,dirección: {x: size, y:0},snake: snake };
     }
@@ -44,7 +65,7 @@
     * Actualiza el mundo en cada tic del reloj. Retorna el nuevo stado del mundo
     */
     processing.onTic = function (world) {
-      return make(world, {snake: [{x: world.snake[0].x + world.snake[0].dirección.x, y: world.snake[0].y + world.snake[0].dirección.y, dirección: {x: world.dirección.x,y: world.dirección.y}},{x: world.snake[1].x + world.snake[1].dirección.x, y: world.snake[1].y + world.snake[1].dirección.y, dirección: {x: world.snake[0].dirección.x,y: world.snake[0].dirección.y}},{x: world.snake[2].x + world.snake[2].dirección.x, y: world.snake[2].y + world.snake[2].dirección.y, dirección: {x: world.snake[1].dirección.x,y: world.snake[1].dirección.y}},{x: world.snake[3].x + world.snake[3].dirección.x, y: world.snake[3].y + world.snake[3].dirección.y, dirección: {x: world.snake[2].dirección.x,y: world.snake[2].dirección.y}}]});
+      return make(world, {snake: reSnake(world.snake,world.dirección)});
     }
 
     /**
@@ -134,23 +155,24 @@
         case 109:
           return make(world, { alto: world.alto - size });
           break;
+        case 32:
+          return make(world, {snake: append(world.snake,[{x: last(world.snake).x+opposite(last(world.snake).dirección.x), y:last(world.snake).y+opposite(last(world.snake).dirección.y), dirección: last(world.snake).dirección}])})
         default:
           console.log(keyCode);
           return make(world, {});
       }
     }
+     processing.drawSnake = function (item)
+  {
+    processing.ellipse(item.x,item.y,size,size);
+  }
 
     // Dibuja algo en el canvas. Aqui se pone todo lo que quieras pintar
     processing.drawGame = function (world, txt) {
       processing.background(10, 200, 50);
       processing.fill(240, 240, 240);
-      processing.text(txt, 50, 200)
-      
-
-      processing.ellipse(world.snake[0].x, world.snake[0].y, world.ancho, world.alto);
-      processing.ellipse(world.snake[1].x, world.snake[1].y, world.ancho, world.alto);
-      processing.ellipse(world.snake[2].x, world.snake[2].y, world.ancho, world.alto);
-      processing.ellipse(world.snake[3].x, world.snake[3].y, world.ancho, world.alto);
+      processing.text(txt, 50, 200);
+      world.snake.forEach(processing.drawSnake);
     }
 
 
