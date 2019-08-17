@@ -55,24 +55,104 @@
      * Esto se llama antes de iniciar el juego
      */
     processing.setup = function () {
-      processing.frameRate(10);
-      processing.size(1000, 800);
+      processing.frameRate(30);
+      processing.size(window.innerWidth-20, window.innerHeight-20);
       processing.background(10, 200, 50);
-      processing.state = { x: 100, y: 100, ancho: size, alto: size ,dirección: {x: size, y:0},snake: snake };
+      processing.state = { x: 100, y: 100, ancho: size, alto: size ,dirección: {x: size, y:0},snake: snake,keydown:false,key:processing.LEFT};
     }
 
     /**
     * Actualiza el mundo en cada tic del reloj. Retorna el nuevo stado del mundo
     */
     processing.onTic = function (world) {
+      if(world.keydown){
+        switch (world.key) {
+        
+        
+        case processing.LEFT:
+        
+          if (world.dirección.x>0&&world.dirección.x<=size&&world.dirección.y<=0)
+        {
+          if(world.dirección.y>-midval(size))
+          {
+            return make(world, {dirección: {y: world.dirección.y - 1,x: Redondear(Pit(world.dirección.y-1))}, snake: reSnake(world.snake,world.dirección)});
+          }
+          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x-1)),x: world.dirección.x-1}, snake: reSnake(world.snake,world.dirección)});
+        }
+        if (world.dirección.y<0&&world.dirección.y>=-size)
+        {
+          if(world.dirección.x>-midval(size)&&world.dirección.x<=0)
+          {
+            return make(world, {dirección: {x: world.dirección.x - 1,y: -Redondear(Pit(world.dirección.x-1))}, snake: reSnake(world.snake,world.dirección)});
+          }
+          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y+1)),y: world.dirección.y+1}, snake: reSnake(world.snake,world.dirección)});
+        }
+        if (world.dirección.x<0&&world.dirección.x>=-size)
+        {
+          if(world.dirección.y<midval(size)&&world.dirección.y>=0)
+          {
+            return make(world, {dirección: {y: world.dirección.y + 1,x: -Redondear(Pit(world.dirección.y+1))}, snake: reSnake(world.snake,world.dirección)});
+          }
+          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x+1)),x: world.dirección.x+1}, snake: reSnake(world.snake,world.dirección)});
+        }
+        if (world.dirección.y>0&&world.dirección.y<=size)
+        {
+          if(world.dirección.x<midval(size)&&world.dirección.x>=0)
+          {
+            return make(world, {dirección: {x: world.dirección.x + 1,y: Redondear(Pit(world.dirección.x+1))}, snake: reSnake(world.snake,world.dirección)});
+          }
+          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y-1)),y: world.dirección.y-1}, snake: reSnake(world.snake,world.dirección)});
+        }
+        
+        break;
+        case processing.RIGHT:
+        if (world.dirección.x>0&&world.dirección.x<=size&&world.dirección.y>=0)
+        {
+          if(world.dirección.y<midval(size))
+          {
+            return make(world, {dirección: {y: world.dirección.y + 1,x: Redondear(Pit(world.dirección.y+1))}, snake: reSnake(world.snake,world.dirección)});
+          }
+          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x-1)),x: world.dirección.x-1}, snake: reSnake(world.snake,world.dirección)});
+        }
+        if (world.dirección.y>0&&world.dirección.y<=size)
+        {
+          if(world.dirección.x>-midval(size)&&world.dirección.x<=0)
+          {
+            return make(world, {dirección: {x: world.dirección.x - 1,y: Redondear(Pit(world.dirección.x-1))}, snake: reSnake(world.snake,world.dirección)});
+          }
+          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y-1)),y: world.dirección.y-1}, snake: reSnake(world.snake,world.dirección)});
+        }
+        if (world.dirección.x<0&&world.dirección.x>=-size)
+        {
+          if(world.dirección.y>-midval(size)&&world.dirección.y<=0)
+          {
+            return make(world, {dirección: {y: world.dirección.y - 1,x: -Redondear(Pit(world.dirección.y-1))}, snake: reSnake(world.snake,world.dirección)});
+          }
+          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x+1)),x: world.dirección.x+1}, snake: reSnake(world.snake,world.dirección)});
+        }
+        if (world.dirección.y<0&&world.dirección.y>=-size)
+        {
+          if(world.dirección.x<midval(size)&&world.dirección.x>=0)
+          {
+            return make(world, {dirección: {x: world.dirección.x + 1,y: -Redondear(Pit(world.dirección.x+1))}, snake: reSnake(world.snake,world.dirección)});
+          }
+          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y+1)),y: world.dirección.y+1}, snake: reSnake(world.snake,world.dirección)});
+        }
+          break;
+       
+        
+      }
+      }
       return make(world, {snake: reSnake(world.snake,world.dirección)});
+      
     }
 
     /**
     * Actualiza el mundo cada vez que se oprime una tecla. Retorna el nuevo stado del mundo
     */
     processing.onKeyEvent = function (world, keyCode) {
-      switch (keyCode) {
+      switch(keyCode)
+      {
         case processing.UP:
           processing.loop();
           return make(world, {});
@@ -81,75 +161,7 @@
           processing.noLoop();
           return make(world, {});
           break;
-        case processing.LEFT:
-        if (world.dirección.x>0&&world.dirección.x<=size&&world.dirección.y<=0)
-        {
-          if(world.dirección.y>-midval(size))
-          {
-            return make(world, {dirección: {y: world.dirección.y - 1,x: Redondear(Pit(world.dirección.y-1))}});
-          }
-          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x-1)),x: world.dirección.x-1}});
-        }
-        if (world.dirección.y<0&&world.dirección.y>=-size)
-        {
-          if(world.dirección.x>-midval(size)&&world.dirección.x<=0)
-          {
-            return make(world, {dirección: {x: world.dirección.x - 1,y: -Redondear(Pit(world.dirección.x-1))}});
-          }
-          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y+1)),y: world.dirección.y+1}});
-        }
-        if (world.dirección.x<0&&world.dirección.x>=-size)
-        {
-          if(world.dirección.y<midval(size)&&world.dirección.y>=0)
-          {
-            return make(world, {dirección: {y: world.dirección.y + 1,x: -Redondear(Pit(world.dirección.y+1))}});
-          }
-          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x+1)),x: world.dirección.x+1}});
-        }
-        if (world.dirección.y>0&&world.dirección.y<=size)
-        {
-          if(world.dirección.x<midval(size)&&world.dirección.x>=0)
-          {
-            return make(world, {dirección: {x: world.dirección.x + 1,y: Redondear(Pit(world.dirección.x+1))}});
-          }
-          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y-1)),y: world.dirección.y-1}});
-        }
-        break;
-        case processing.RIGHT:
-        if (world.dirección.x>0&&world.dirección.x<=size&&world.dirección.y>=0)
-        {
-          if(world.dirección.y<midval(size))
-          {
-            return make(world, {dirección: {y: world.dirección.y + 1,x: Redondear(Pit(world.dirección.y+1))}});
-          }
-          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x-1)),x: world.dirección.x-1}});
-        }
-        if (world.dirección.y>0&&world.dirección.y<=size)
-        {
-          if(world.dirección.x>-midval(size)&&world.dirección.x<=0)
-          {
-            return make(world, {dirección: {x: world.dirección.x - 1,y: Redondear(Pit(world.dirección.x-1))}});
-          }
-          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y-1)),y: world.dirección.y-1}});
-        }
-        if (world.dirección.x<0&&world.dirección.x>=-size)
-        {
-          if(world.dirección.y>-midval(size)&&world.dirección.y<=0)
-          {
-            return make(world, {dirección: {y: world.dirección.y - 1,x: -Redondear(Pit(world.dirección.y-1))}});
-          }
-          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x+1)),x: world.dirección.x+1}});
-        }
-        if (world.dirección.y<0&&world.dirección.y>=-size)
-        {
-          if(world.dirección.x<midval(size)&&world.dirección.x>=0)
-          {
-            return make(world, {dirección: {x: world.dirección.x + 1,y: -Redondear(Pit(world.dirección.x+1))}});
-          }
-          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y+1)),y: world.dirección.y+1}});
-        }
-          break;
-        case 107:
+          case 107:
           return make(world, { alto: world.alto + size });
           break;
         case 109:
@@ -158,13 +170,16 @@
         case 32:
           return make(world, {snake: append(world.snake,[{x: last(world.snake).x+opposite(last(world.snake).dirección.x), y:last(world.snake).y+opposite(last(world.snake).dirección.y), dirección: last(world.snake).dirección}])})
         default:
-          console.log(keyCode);
-          return make(world, {});
+        return make(world, {keydown: true, key:keyCode});
       }
+      
     }
      processing.drawSnake = function (item)
   {
     processing.ellipse(item.x,item.y,size,size);
+  }
+  processing.offKeyEvent = function (world, keyCode){
+    return make(world, {keydown: false, key:keyCode});
   }
 
     // Dibuja algo en el canvas. Aqui se pone todo lo que quieras pintar
@@ -188,6 +203,13 @@
     processing.keyPressed = function () {
       processing.state = processing.onKeyEvent(processing.state, processing.keyCode);
     }
+
+    processing.keyReleased = function () {
+      processing.state = processing.offKeyEvent(processing.state, processing.keyCode);
+    }
+
+    
+    
   }
 
   var canvas = document.getElementById("canvas");
