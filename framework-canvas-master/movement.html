@@ -13,7 +13,7 @@
   
   function Pit(val)
   {
-    return Math.sqrt(Math.pow(size,2)-Math.pow(val,2));
+    return Math.sqrt(Math.pow(speed,2)-Math.pow(val,2));
   }
   function Redondear(val)
   {
@@ -47,8 +47,13 @@
   {
     return -val;
   }
+  function Distance(x1,y1,x2,y2)
+  {
+    return Redondear(Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2)));
+  }
   const size=10;
-  const snake=[{x: 100, y:100, dirección: {x: size,y: 0}},{x: 100-size, y:100, dirección: {x: size,y: 0}},{x: 100-2*size, y:100, dirección: {x: size,y: 0}},{x: 100-3*size, y:100, dirección: {x: size,y: 0}}]
+  const speed=size;
+  const snake=[{x: 100, y:100, dirección: {x: speed,y: 0}},{x: 100-size, y:100, dirección: {x: speed,y: 0}},{x: 100-2*size, y:100, dirección: {x: speed,y: 0}},{x: 100-3*size, y:100, dirección: {x: speed,y: 0}}]
   function sketchProc(processing) {
 
     /**
@@ -58,7 +63,8 @@
       processing.frameRate(30);
       processing.size(window.innerWidth-20, window.innerHeight-20);
       processing.background(10, 200, 50);
-      processing.state = { x: 100, y: 100, ancho: size, alto: size ,dirección: {x: size, y:0},snake: snake,keydown:false,key:processing.LEFT};
+      processing.state = { x: 100, y: 100, ancho: size, alto: size ,dirección: {x: speed, y:0},snake: snake,keydown:false,key:processing.LEFT,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},score: 0,twist: 1, distance: 10};
+      
     }
 
     /**
@@ -71,79 +77,79 @@
         
         case processing.LEFT:
         
-          if (world.dirección.x>0&&world.dirección.x<=size&&world.dirección.y<=0)
+          if (world.dirección.x>0&&world.dirección.x<=speed&&world.dirección.y<=0)
         {
-          if(world.dirección.y>-midval(size))
+          if(world.dirección.y>-midval(speed))
           {
-            return make(world, {dirección: {y: world.dirección.y - 1,x: Redondear(Pit(world.dirección.y-1))}, snake: reSnake(world.snake,world.dirección)});
+            return make(world, {dirección: {y: world.dirección.y - world.twist,x: Redondear(Pit(world.dirección.y-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
           }
-          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x-1)),x: world.dirección.x-1}, snake: reSnake(world.snake,world.dirección)});
+          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x-world.twist)),x: world.dirección.x-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
         }
-        if (world.dirección.y<0&&world.dirección.y>=-size)
+        if (world.dirección.y<0&&world.dirección.y>=-speed)
         {
-          if(world.dirección.x>-midval(size)&&world.dirección.x<=0)
+          if(world.dirección.x>-midval(speed)&&world.dirección.x<=0)
           {
-            return make(world, {dirección: {x: world.dirección.x - 1,y: -Redondear(Pit(world.dirección.x-1))}, snake: reSnake(world.snake,world.dirección)});
+            return make(world, {dirección: {x: world.dirección.x - world.twist,y: -Redondear(Pit(world.dirección.x-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
           }
-          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y+1)),y: world.dirección.y+1}, snake: reSnake(world.snake,world.dirección)});
+          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y+world.twist)),y: world.dirección.y+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
         }
-        if (world.dirección.x<0&&world.dirección.x>=-size)
+        if (world.dirección.x<0&&world.dirección.x>=-speed)
         {
-          if(world.dirección.y<midval(size)&&world.dirección.y>=0)
+          if(world.dirección.y<midval(speed)&&world.dirección.y>=0)
           {
-            return make(world, {dirección: {y: world.dirección.y + 1,x: -Redondear(Pit(world.dirección.y+1))}, snake: reSnake(world.snake,world.dirección)});
+            return make(world, {dirección: {y: world.dirección.y + world.twist,x: -Redondear(Pit(world.dirección.y+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
           }
-          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x+1)),x: world.dirección.x+1}, snake: reSnake(world.snake,world.dirección)});
+          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x+world.twist)),x: world.dirección.x+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
         }
-        if (world.dirección.y>0&&world.dirección.y<=size)
+        if (world.dirección.y>0&&world.dirección.y<=speed)
         {
-          if(world.dirección.x<midval(size)&&world.dirección.x>=0)
+          if(world.dirección.x<midval(speed)&&world.dirección.x>=0)
           {
-            return make(world, {dirección: {x: world.dirección.x + 1,y: Redondear(Pit(world.dirección.x+1))}, snake: reSnake(world.snake,world.dirección)});
+            return make(world, {dirección: {x: world.dirección.x + world.twist,y: Redondear(Pit(world.dirección.x+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
           }
-          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y-1)),y: world.dirección.y-1}, snake: reSnake(world.snake,world.dirección)});
+          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y-world.twist)),y: world.dirección.y-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
         }
         
         break;
         case processing.RIGHT:
-        if (world.dirección.x>0&&world.dirección.x<=size&&world.dirección.y>=0)
+        if (world.dirección.x>0&&world.dirección.x<=speed&&world.dirección.y>=0)
         {
-          if(world.dirección.y<midval(size))
+          if(world.dirección.y<midval(speed))
           {
-            return make(world, {dirección: {y: world.dirección.y + 1,x: Redondear(Pit(world.dirección.y+1))}, snake: reSnake(world.snake,world.dirección)});
+            return make(world, {dirección: {y: world.dirección.y + world.twist,x: Redondear(Pit(world.dirección.y+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
           }
-          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x-1)),x: world.dirección.x-1}, snake: reSnake(world.snake,world.dirección)});
+          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x-world.twist)),x: world.dirección.x-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
         }
-        if (world.dirección.y>0&&world.dirección.y<=size)
+        if (world.dirección.y>0&&world.dirección.y<=speed)
         {
-          if(world.dirección.x>-midval(size)&&world.dirección.x<=0)
+          if(world.dirección.x>-midval(speed)&&world.dirección.x<=0)
           {
-            return make(world, {dirección: {x: world.dirección.x - 1,y: Redondear(Pit(world.dirección.x-1))}, snake: reSnake(world.snake,world.dirección)});
+            return make(world, {dirección: {x: world.dirección.x - world.twist,y: Redondear(Pit(world.dirección.x-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
           }
-          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y-1)),y: world.dirección.y-1}, snake: reSnake(world.snake,world.dirección)});
+          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y-world.twist)),y: world.dirección.y-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
         }
-        if (world.dirección.x<0&&world.dirección.x>=-size)
+        if (world.dirección.x<0&&world.dirección.x>=-speed)
         {
-          if(world.dirección.y>-midval(size)&&world.dirección.y<=0)
+          if(world.dirección.y>-midval(speed)&&world.dirección.y<=0)
           {
-            return make(world, {dirección: {y: world.dirección.y - 1,x: -Redondear(Pit(world.dirección.y-1))}, snake: reSnake(world.snake,world.dirección)});
+            return make(world, {dirección: {y: world.dirección.y - world.twist,x: -Redondear(Pit(world.dirección.y-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
           }
-          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x+1)),x: world.dirección.x+1}, snake: reSnake(world.snake,world.dirección)});
+          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x+world.twist)),x: world.dirección.x+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
         }
-        if (world.dirección.y<0&&world.dirección.y>=-size)
+        if (world.dirección.y<0&&world.dirección.y>=-speed)
         {
-          if(world.dirección.x<midval(size)&&world.dirección.x>=0)
+          if(world.dirección.x<midval(speed)&&world.dirección.x>=0)
           {
-            return make(world, {dirección: {x: world.dirección.x + 1,y: -Redondear(Pit(world.dirección.x+1))}, snake: reSnake(world.snake,world.dirección)});
+            return make(world, {dirección: {x: world.dirección.x + world.twist,y: -Redondear(Pit(world.dirección.x+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
           }
-          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y+1)),y: world.dirección.y+1}, snake: reSnake(world.snake,world.dirección)});
+          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y+world.twist)),y: world.dirección.y+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
         }
           break;
        
         
       }
       }
-      return make(world, {snake: reSnake(world.snake,world.dirección)});
+      return make(world, {snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
       
     }
 
@@ -158,6 +164,8 @@
           return make(world, {});
           break;
         case processing.DOWN:
+          processing.textSize(100)
+          processing.text("PAUSE", window.innerWidth/3, window.innerHeight/2);
           processing.noLoop();
           return make(world, {});
           break;
@@ -186,15 +194,22 @@
     processing.drawGame = function (world, txt) {
       processing.background(10, 200, 50);
       processing.fill(240, 240, 240);
-      processing.text(txt, 50, 200);
+      if (world.distance<=size*0.75)
+      {
+        processing.state = make(world, {score:world.score+100,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},distance: 10,snake: append(world.snake,[{x: last(world.snake).x+opposite(last(world.snake).dirección.x), y:last(world.snake).y+opposite(last(world.snake).dirección.y), dirección: last(world.snake).dirección}])});
+      }
       world.snake.forEach(processing.drawSnake);
+      processing.ellipse(world.food.x,world.food.y,size,size);
+      processing.text(txt, 50, 200);
+      processing.text("SCORE: "+world.score, 10, 10);
+      
     }
 
 
     // Esta es la función que pinta todo. Se ejecuta 60 veces por segundo. 
     // No cambie esta función. Su código debe ir en drawGame
     processing.draw = function () {
-      processing.drawGame(processing.state, [processing.state.dirección.x,processing.state.dirección.y,Pit(processing.state.dirección.y),Redondear(Pit(processing.state.dirección.y)),midval(size)]);
+      processing.drawGame(processing.state, processing.state.distance);
       processing.state = processing.onTic(processing.state);
     };
 
