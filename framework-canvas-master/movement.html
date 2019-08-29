@@ -6,29 +6,57 @@
 
   // Importamos las librerias
   let { append, cons, first, isEmpty, isList, length, rest } = functionalLight;
-
   function make(data, attribute) {
     return Object.assign({}, data, attribute);
   }
-  // Aquí se definen el tamaño de los segmentos y las velocidades. Como pueden ver, la velocidad es totalmente dependiente del tamaño
-  const size=10;
-  const speed=size;
-  /* Contrato: Pit: number --> number
-  Propósito: Calcular el valor restante necesario para que x^2+y^2=h^2, siendo val x o y y siendo h speed
-  Ejemplos: Pit(10) => 0
-            Pit(5)  => 8.66
-            Pit(7)  => 7.14
-  */
+  function puntdif()
+  {
+    switch (chosendif)
+    {
+      case difficulty.millipede:
+        return "PuntajeM";
+        break;
+      case difficulty.snake:
+        return "PuntajeS";
+        break;
+      case difficulty.centipede:
+        return "PuntajeC";
+        break;
+    }
+  }
+  function invertir(list)
+  {
+    if(isEmpty(list))
+    {
+      return [];
+    }
+    return cons(last(list),invertir(restLast(list)));
+  }
+  function contain(x,list)
+  {
+    if(isEmpty(list))
+    {
+      return false;
+    }
+    if (x==first(list))
+    {
+      return true;
+    }
+    return contain(x,(rest(list)));
+  }
+  function restLast(list)
+  {
+    if(length(list)==1)
+    {
+      return [];
+    }
+    return cons(first(list),restLast(rest(list)));
+  }
+ 
   function Pit(val)
   {
     return Math.sqrt(Math.pow(speed,2)-Math.pow(val,2));
   }
-  /* Contrato: Redondear: number --> number
-  Propósito: Aproximar un valor al entero más cercano
-  Ejemplos: Redondear(3.2)  =>  3
-            Redondear(7.57) =>  8
-            Redondear(2)    =>  2
-  */
   function Redondear(val)
   {
     if(Math.ceil(val)-val<val-Math.floor(val))
@@ -37,31 +65,34 @@
     }
     return Math.floor(val);
   }
-  /*Contrato: midval: number --> number
-  Propósito: Calcula el valor para el cual se cumple que x^2+y^2=h^2, donde x y y son iguales y son el valor calculado, y h el valor ingresado
-  Ejemplos: midval(5)   => 4
-            midval(10)  => 7
-            midval(15)  => 11
-  */
   function midval(val)
   {
     return Redondear(Math.sqrt(Math.pow(val,2)/2));
   }
-  /*Contrato: reSnake: list, object --> list
-  Propósito: Actualiza las posiciones x y y de los segmentos del Snake, así como sus direcciones. La nueva dirección
-  de cada segmento es la antigua dirección del segmento anterior
-  */
-  function reSnake(snake,dir)
+  function reSnake(snake,dir,x,y)
   {
     if(isEmpty(snake))
     {
       return [];
     }
-    return cons({x: first(snake).x + first(snake).dirección.x, y: first(snake).y + first(snake).dirección.y, dirección: dir},reSnake(rest(snake),first(snake).dirección));
+    if(first(snake).x>=window.innerWidth)
+    {
+      return cons({x: 0 + first(snake).dirección.x, y: first(snake).y + first(snake).dirección.y, dirección: dir,distance: Distance(x,y,first(snake).x,first(snake).y)}, reSnake(rest(snake),first(snake).dirección,x,y));
+    }
+    if(first(snake).x<=0)
+    {
+      return cons({x: window.innerWidth + first(snake).dirección.x, y: first(snake).y + first(snake).dirección.y, dirección: dir,distance: Distance(x,y,first(snake).x,first(snake).y)}, reSnake(rest(snake),first(snake).dirección,x,y));
+    }
+    if(first(snake).y>=window.innerHeight)
+    {
+      return cons({x: first(snake).x + first(snake).dirección.x, y: 0 + first(snake).dirección.y, dirección: dir,distance: Distance(x,y,first(snake).x,first(snake).y)}, reSnake(rest(snake),first(snake).dirección,x,y));
+    }
+    if(first(snake).y<=0)
+    {
+      return cons({x: first(snake).x + first(snake).dirección.x, y: window.innerHeight + first(snake).dirección.y, dirección: dir,distance: Distance(x,y,first(snake).x,first(snake).y)}, reSnake(rest(snake),first(snake).dirección,x,y));
+    }
+    return cons({x: first(snake).x + first(snake).dirección.x, y: first(snake).y + first(snake).dirección.y, dirección: dir,distance: Distance(x,y,first(snake).x,first(snake).y)}, reSnake(rest(snake),first(snake).dirección,x,y));
   }
-  /*Contrato: last: list --> value
-  Propósito: Determinar el último elemento de una lista
-  */
   function last(list)
   {
     if(length(list)==1)
@@ -70,148 +101,142 @@
     }
     return last(rest(list));
   }
-  /*Contrato: opposite: number --> number
-  Propósito: Determinar el opuesto de un valor
-  Ejemplos:     opposite(-5)  =>  5
-                opposite(3)   =>  -3
-                opposite(0)   =>  0
-  */
   function opposite(val)
   {
     return -val;
   }
-  /*Contrato: Distance: number, number, number, number --> number
-  Propósito: Determinar la distancia entre dos puntos en un plano cartesiano
-  Ejemplo:    Distance(-3,7,5,10) =>  8.54
-  */
   function Distance(x1,y1,x2,y2)
   {
     return Redondear(Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2)));
   }
-  // Aquí establecemos la constante snake, que serán los valores iniciales de nuestra snake en el juego. Cada segmento va detrás del otro.
-  const snake=[{x: 100, y:100, dirección: {x: speed,y: 0}},{x: 100-size, y:100, dirección: {x: speed,y: 0}},{x: 100-2*size, y:100, dirección: {x: speed,y: 0}},{x: 100-3*size, y:100, dirección: {x: speed,y: 0}}]
+  function Movement(world,a,val1,val2)
+  {
+    if(a==="y")
+    {
+      return make(world, {dirección: {y: world.dirección.y + world.twist*val1,x: Redondear(Pit(world.dirección.y+val1*world.twist))*val2}, snake: reSnake(world.snake,world.dirección,world.snake[0].x,world.snake[0].y), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y),movement: 1});
+    }
+    else if(a==="x"){
+      return make(world, {dirección: {x: world.dirección.x + world.twist*val1,y: Redondear(Pit(world.dirección.x+val1*world.twist))*val2}, snake: reSnake(world.snake,world.dirección,world.snake[0].x,world.snake[0].y), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y),movement: 2});
+    }
+    else if(a==="nothing"){
+      return make(world, {snake: reSnake(world.snake,world.dirección,world.snake[0].x,world.snake[0].y), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y), movement: 3});
+    }
+  }
+  function selfColission(snake,head)
+  {
+    if (isEmpty(snake))
+    {
+      return false;
+    }
+    if (Distance(head.x,head.y,first(snake).x,first(snake).y)<normdistance)
+    {
+      return true;
+    }
+    return selfColission(rest(snake),head);
+  }
+  const size=10;
+  const difficulty={millipede: {speed: size*0.5, twist: 1}, snake: {speed: size*0.75, twist: 1.5}, centipede: {speed: size, twist: 2}};
+  const chosendif=difficulty.snake;
+  const speed=chosendif.speed
+  const snake=[{x: 100, y:100, dirección: {x: speed,y: 0}, distance: 20},{x: 100-speed, y:100, dirección: {x: speed,y: 0}, distance: 20},{x: 100-2*speed, y:100, dirección: {x: speed,y: 0}, distance: 20},{x: 100-3*speed, y:100, dirección: {x: speed,y: 0}, distance: 20}]
+  const normdistance=Distance(snake[0].x,snake[0].y,snake[1].x,snake[1].y);
   function sketchProc(processing) {
 
     /**
      * Esto se llama antes de iniciar el juego
      */
     processing.setup = function () {
+      document.getElementById("canvas").focus();
       processing.frameRate(30);
       processing.size(window.innerWidth-20, window.innerHeight-20);
       processing.background(10, 200, 50);
-      /* Importante: El twist representa la magnitud del giro dado por la serpiente cuando se presiona izquierda o derecha.
-      Asignarle un valor muy cercano al midval() puede buguear el juego (No me pregunten cómo lo sé :p).
-      */
-      processing.state = { x: 100, y: 100, ancho: size, alto: size ,dirección: {x: speed, y:0},snake: snake,keydown:false,key:processing.LEFT,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},score: 0,twist: 1, distance: 10};
+      processing.state = {index: 0,plump:[-1] ,eat: false,over: false,kill: false, x: 100, y: 100, ancho: size, alto: size ,dirección: {x: speed, y:0},snake: snake,keydown:false,key:processing.LEFT,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},score: 0,twist: chosendif.twist, distance: 20,movement: false};
       
     }
 
     /**
     * Actualiza el mundo en cada tic del reloj. Retorna el nuevo stado del mundo
     */
-    /* Aquí se añade parte del código que debería ir en onKeyEvent, con el fin de evitar el delay. Para ello, guardamos
-    las variables key y keydown en el world, que son evaluadas por el onTic para saber qué procesos ejecutar
-    */
     processing.onTic = function (world) {
       if(world.keydown){
         switch (world.key) {
         
-        // Vamos a comenzar con la izquierda, es decir, girar en sentido de las manecillas del reloj
+        
         case processing.LEFT:
-        // Se evalúa si la dirección se encuentra en el primer cuadrante
+        
           if (world.dirección.x>0&&world.dirección.x<=speed&&world.dirección.y<=0)
         {
-          // Se evalúa si la dirección actual es más cercana a la derecha que hacia arriba
           if(world.dirección.y>-midval(speed))
           {
-            /* De ser cierto, se comienza a alterar la dirección Y según el twist, y se redefine la dirección X según este cambio
-            con Redondear(Pit()). Cabe añadir que en cada return make() se actualiza el snake con reSnake() y la distancia 
-            entre la cabeza del snake y la comida con Distance().
-            */
-            return make(world, {dirección: {y: world.dirección.y - world.twist,x: Redondear(Pit(world.dirección.y-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"y",-1,1);
           }
-          /* De ya no ser cierto o haber superado el midval, esta vez se comienza a alterar el X en lugar del Y según el twist, y el Y
-          se redefine según este cambio con -Redondear(Pit()) (se multiplica por -1, ya que para llegar a esta condición Y tiene que ser
-          un valor negativo). Nuevamente, el snake se actualiza junto con la distancia.
-          */
-          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x-world.twist)),x: world.dirección.x-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"x",-1,-1);
         }
-        // Se evalúa si la dirección actual es más cercana hacia arriba que a la izquierda
         if (world.dirección.y<0&&world.dirección.y>=-speed)
         {
-          /* A partir de este punto, todas las condiciones y sus returns son casi idénticas, a excepción de algunos cambios
-          entre <,>,+ y -.
-          */
           if(world.dirección.x>-midval(speed)&&world.dirección.x<=0)
           {
-            return make(world, {dirección: {x: world.dirección.x - world.twist,y: -Redondear(Pit(world.dirección.x-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"x",-1,-1);
           }
-          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y+world.twist)),y: world.dirección.y+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"y",1,-1);
         }
-        // Se evalúa si la dirección actual es más cercana a la izquierda que hacia abajo
         if (world.dirección.x<0&&world.dirección.x>=-speed)
         {
           if(world.dirección.y<midval(speed)&&world.dirección.y>=0)
           {
-            return make(world, {dirección: {y: world.dirección.y + world.twist,x: -Redondear(Pit(world.dirección.y+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"y",1,-1);
           }
-          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x+world.twist)),x: world.dirección.x+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"x",1,1);
         }
-        // Se evalúa si la dirección actual es más cercana hacia abajo que a la derecha
         if (world.dirección.y>0&&world.dirección.y<=speed)
         {
           if(world.dirección.x<midval(speed)&&world.dirección.x>=0)
           {
-            return make(world, {dirección: {x: world.dirección.x + world.twist,y: Redondear(Pit(world.dirección.x+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"x",1,1);
           }
-          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y-world.twist)),y: world.dirección.y-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"y",-1,1);
         }
-        /* Después de finalizado el cuarto cuadrante, volvemos a la dirección inicial, por lo que ya podemos dar vueltas infinitas
-        en sentido de las manecillas del reloj
-        */
+        
         break;
-        // Ahora continuamos por la derecha, es decir, en sentido contrario a las manecillas del reloj
-        // Nuevamente, las condiciones y los returns son casi idénticos a los anteriores, a excepción de sus signos
         case processing.RIGHT:
         if (world.dirección.x>0&&world.dirección.x<=speed&&world.dirección.y>=0)
         {
           if(world.dirección.y<midval(speed))
           {
-            return make(world, {dirección: {y: world.dirección.y + world.twist,x: Redondear(Pit(world.dirección.y+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"y",1,1);
           }
-          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x-world.twist)),x: world.dirección.x-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"x",-1,1);
         }
         if (world.dirección.y>0&&world.dirección.y<=speed)
         {
           if(world.dirección.x>-midval(speed)&&world.dirección.x<=0)
           {
-            return make(world, {dirección: {x: world.dirección.x - world.twist,y: Redondear(Pit(world.dirección.x-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"x",-1,1);
           }
-          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y-world.twist)),y: world.dirección.y-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"y",-1,-1);
         }
         if (world.dirección.x<0&&world.dirección.x>=-speed)
         {
           if(world.dirección.y>-midval(speed)&&world.dirección.y<=0)
           {
-            return make(world, {dirección: {y: world.dirección.y - world.twist,x: -Redondear(Pit(world.dirección.y-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"y",-1,-1);
           }
-          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x+world.twist)),x: world.dirección.x+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"x",1,-1);
         }
         if (world.dirección.y<0&&world.dirección.y>=-speed)
         {
           if(world.dirección.x<midval(speed)&&world.dirección.x>=0)
           {
-            return make(world, {dirección: {x: world.dirección.x + world.twist,y: -Redondear(Pit(world.dirección.x+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"x",1,-1);
           }
-          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y+world.twist)),y: world.dirección.y+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"y",1,1);
         }
           break;
        
         
       }
       }
-      // En caso de que no esté presionada ni izquierda ni derecha, la snake simplemente avanzará.
-      return make(world, {snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+      return Movement(world,"nothing",null,null);
       
     }
 
@@ -222,17 +247,12 @@
       switch(keyCode)
       {
         case processing.UP:
-          //El loop() que les mencioné anteriormente. Comienza a ejecutar indefinidamente la función draw()
           processing.loop();
           return make(world, {});
           break;
         case processing.DOWN:
           processing.textSize(100)
           processing.text("PAUSE", window.innerWidth/3, window.innerHeight/2);
-          //De forma similar, el noLoop() detiene el draw()
-          /*La razón por la cual arriba es "Play" y abajo "Pause" es pura coincidencia, producto del testeo.
-          Más tarde decidiremos un botón para detener y continuar el juego
-          */
           processing.noLoop();
           return make(world, {});
           break;
@@ -243,54 +263,155 @@
           return make(world, { alto: world.alto - size });
           break;
         case 32:
-          /* Cuando la tecla 32 (la barra espaciadora) es presionada, se añade un nuevo segmento al snake después del último segmento
-          (la cola). Para ello, se redefine el snake del world con un append de la nueva cola, que se posiciona en las direcciones
-          opuestas de esta (aquí es donde entra en juego el opposite), pero adquiere sus direcciones.
-          Este botón ejemplifica el crecimiento de la serpiente. No es necesario en el juego pues ya se implementó con la comida.
-          Pueden borrarlo cuando lo consideren pertinente.
-          */
           return make(world, {snake: append(world.snake,[{x: last(world.snake).x+opposite(last(world.snake).dirección.x), y:last(world.snake).y+opposite(last(world.snake).dirección.y), dirección: last(world.snake).dirección}])})
         default:
-        //Para evitar el delay, cuando una tecla se presiona, el valor de keydown cambia a true y el key a la tecla presionada
         return make(world, {keydown: true, key:keyCode});
       }
       
     }
-    // Esta función dibuja un determinado segmento del snake
      processing.drawSnake = function (item)
   {
+    if(!processing.state.kill)
+    {
+    processing.fill(245, 140, 42);
+  }
+  else{
+    processing.fill(158, 155, 147);
+  }
     processing.ellipse(item.x,item.y,size,size);
   }
-  //Retorna la tecla soltada y determina que ya no hay teclas presionadas
-  //Para más información de esta función, revisar su definición al final
+  processing.eatSnake = function(item,index,array)
+  {
+    if(!processing.state.kill)
+    {
+    processing.fill(245, 140, 42);
+  }
+  else{
+    processing.fill(158, 155, 147);
+  }
+    if(contain(index,processing.state.plump))
+    {
+      if(index==length(array)-1)
+      {
+        if(length(processing.state.plump)>1)
+        {
+          processing.state = make(processing.state, {plump: rest(processing.state.plump)});
+        }
+        else{
+          processing.state = make(processing.state, {plump: [-1],eat: false});
+        }
+        processing.ellipse(item.x,item.y,size,size);
+      processing.state = make(processing.state, {index: index,snake: append(processing.state.snake,[{x: last(processing.state.snake).x+opposite(last(processing.state.snake).dirección.x), y:last(processing.state.snake).y+opposite(last(processing.state.snake).dirección.y), dirección: last(processing.state.snake).dirección, distance: 0}])});
+      }
+      else{
+      processing.ellipse(item.x,item.y,size*1.5-(index*size*0.5)/length(array),size*1.5-(index*size*0.5)/length(array));
+      }
+      
+    }
+    
+    else{
+    processing.ellipse(item.x,item.y,size,size);
+    }
+  }
+  processing.desintegrate = function (world)
+  { 
+    if (length(world.snake)==1)
+    {
+      processing.state = make(world, {over: true});
+    }
+    else{
+    processing.state = make(world, {snake: restLast(world.snake)});
+    processing.loop();
+    }
+    
+
+  }
+  processing.stop = function (item)
+  {
+    return make(item, {dirección: {x: 0,y: 0}});
+  }
+  processing.check = function (key)
+  {
+    if (window.localStorage.getItem(key)==null)
+    {
+      window.localStorage.setItem(puntdif(),"0");
+    }
+  }
+ 
+ 
   processing.offKeyEvent = function (world, keyCode){
     return make(world, {keydown: false, key:keyCode});
   }
 
     // Dibuja algo en el canvas. Aqui se pone todo lo que quieras pintar
-    // La función del txt no es más que probar que ciertos valores estén funcionando correctamente con text(). No es necesario en el juego
     processing.drawGame = function (world, txt) {
-      processing.background(10, 200, 50);
-      processing.fill(240, 240, 240);
-      /*Atención a este if. Se activa cuando la distancia entre la cabeza de la serpiente y la comida es inferior a sus diámetros
-      (cuando se la está "comiendo")
-      */
-      if (world.distance<size)
+      processing.check(puntdif());
+      if (world.score>parseInt(window.localStorage.getItem(puntdif())))
       {
-        /* El return generado por este make es interesante, pues cumple 3 funciones a la vez:
-        1) Aumentar el score en 100
-        2) Reubicar a la comida en una posición aleatoria
-        3) Aumentar el tamaño de la serpiente. Se usa el mismo código que con la barra espaciadora.
-        */
-        processing.state = make(world, {score:world.score+100,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},distance: 10,snake: append(world.snake,[{x: last(world.snake).x+opposite(last(world.snake).dirección.x), y:last(world.snake).y+opposite(last(world.snake).dirección.y), dirección: last(world.snake).dirección}])});
+        window.localStorage.setItem(puntdif(),""+world.score);
       }
-      //Con el forEach(drawSnake), se dibuja cada segmento del snake, independientemente de la cantidad de éstos.
+      if (world.over==false)
+      {
+        processing.background(10, 200, 50);
+      processing.fill(240, 240, 240);
+      processing.state = make(world, {})
+      if (selfColission(rest(world.snake),world.snake[0])&&world.kill==false)
+      {
+        processing.state = make(world, {eat: false,snake: world.snake.map(processing.stop), dirección: {x: 0, y: 0}});
+        setTimeout(function(){processing.state=make(world, {kill: true})}, 1000);
+      }
+      if (world.distance<=size*2)
+      {
+        processing.state = make(world, {eat: true,score:world.score+100,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},distance: 10});
+      }
+      if (world.kill)
+      {
+          processing.desintegrate(world);
+      }
+      if(world.eat)
+      {
+        processing.state = make(world,{plump: world.plump.map((x)=> x+1)});
+        world.snake.forEach(processing.eatSnake);
+        if (selfColission(rest(world.snake),world.snake[0])&&world.kill==false)
+      {
+        processing.state = make(world, {eat: false,snake: world.snake.map(processing.stop), dirección: {x: 0, y: 0}});
+        processing.fill(158, 155, 147)
+        setTimeout(function(){processing.state=make(world, {kill: true})}, 1000);
+      }
+      if (world.distance<=size*2)
+      {
+        processing.state = make(world, {plump: invertir(cons(-1,invertir(world.plump))),score:world.score+100,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},distance: 10});
+
+      }
+      
+        
+      }
+      else{
       world.snake.forEach(processing.drawSnake);
-      //Se dibuja la comida
-      processing.ellipse(world.food.x,world.food.y,size,size);
+      }
+      if (world.eat)
+      {
+        processing.fill(252, 114, 114);
+      }
+      else
+      {
+      processing.fill(245, 42, 42);
+      }
+
+      processing.ellipse(world.food.x,world.food.y,size*3,size*3);
+      processing.textSize(20)
       processing.text(txt, 50, 200);
-      //Se dibuja el "SCORE"
-      processing.text("SCORE: "+world.score, 10, 10);
+      processing.text("SCORE: "+world.score, 10, 30);
+      processing.text("BEST SCORE: "+window.localStorage.getItem(puntdif()), 10, 70);
+      }
+      else
+      {
+        setTimeout(function(){
+        processing.background(0,0,0);
+        processing.textSize(150)
+          processing.text("GAME OVER", window.innerWidth/6, window.innerHeight/2);
+        },500);
+      }
       
     }
 
@@ -298,16 +419,19 @@
     // Esta es la función que pinta todo. Se ejecuta 60 veces por segundo. 
     // No cambie esta función. Su código debe ir en drawGame
     processing.draw = function () {
-      processing.drawGame(processing.state, processing.state.distance);
+      processing.drawGame(processing.state, processing.state.plump);
       processing.state = processing.onTic(processing.state);
     };
 
     // Esta función se ejecuta cada vez que presionamos una tecla. 
     // No cambie esta función. Su código debe ir en onKeyEvent
     processing.keyPressed = function () {
+      if (!processing.state.over)
+      {
       processing.state = processing.onKeyEvent(processing.state, processing.keyCode);
+      }
     }
-    // Esta es una parodia de la función keyPressed, cuyo fin es determinar cuando se suelta una tecla y cuál se soltó.
+
     processing.keyReleased = function () {
       processing.state = processing.offKeyEvent(processing.state, processing.keyCode);
     }
