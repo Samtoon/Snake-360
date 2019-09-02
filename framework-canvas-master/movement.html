@@ -6,13 +6,56 @@
 
   // Importamos las librerias
   let { append, cons, first, isEmpty, isList, length, rest } = functionalLight;
-
   function make(data, attribute) {
     return Object.assign({}, data, attribute);
   }
-  // Aquí se definen el tamaño de los segmentos y las velocidades. Como pueden ver, la velocidad es totalmente dependiente del tamaño
-  const size=10;
-  const speed=size;
+  //Determina el Mejor Puntaje de la dificultad seleccionada
+  function puntdif()
+  {
+    switch (chosendif)
+    {
+      case difficulty.millipede:
+        return "PuntajeM";
+        break;
+      case difficulty.snake:
+        return "PuntajeS";
+        break;
+      case difficulty.centipede:
+        return "PuntajeC";
+        break;
+    }
+  }
+  //Invierte una lista
+  function invertir(list)
+  {
+    if(isEmpty(list))
+    {
+      return [];
+    }
+    return cons(last(list),invertir(restLast(list)));
+  }
+  //Determina si un elemento está contenido en una lista
+  function contain(x,list)
+  {
+    if(isEmpty(list))
+    {
+      return false;
+    }
+    if (x==first(list))
+    {
+      return true;
+    }
+    return contain(x,(rest(list)));
+  }
+  //Elimina el último elemento de una lista
+  function restLast(list)
+  {
+    if(length(list)==1)
+    {
+      return [];
+    }
+    return cons(first(list),restLast(rest(list)));
+  }
   /* Contrato: Pit: number --> number
   Propósito: Calcular el valor restante necesario para que x^2+y^2=h^2, siendo val x o y y siendo h speed
   Ejemplos: Pit(10) => 0
@@ -38,7 +81,8 @@
     return Math.floor(val);
   }
   /*Contrato: midval: number --> number
-  Propósito: Calcula el valor para el cual se cumple que x^2+y^2=h^2, donde x y y son iguales y son el valor calculado, y h el valor ingresado
+  Propósito: Calcula el valor para el cual se cumple que x^2+y^2=h^2, donde x y y son iguales y son el valor calculado, 
+  y h el valor ingresado
   Ejemplos: midval(5)   => 4
             midval(10)  => 7
             midval(15)  => 11
@@ -51,17 +95,53 @@
   Propósito: Actualiza las posiciones x y y de los segmentos del Snake, así como sus direcciones. La nueva dirección
   de cada segmento es la antigua dirección del segmento anterior
   */
-  function reSnake(snake,dir)
+  function reSnake(snake,dir,x,y)
   {
+    /*Los if's evalúan si el snake está tocando algún límite del mapa. En caso de ser cierto
+    se teletransporta al límite opuesto
+    */
     if(isEmpty(snake))
     {
       return [];
     }
-    return cons({x: first(snake).x + first(snake).dirección.x, y: first(snake).y + first(snake).dirección.y, dirección: dir},reSnake(rest(snake),first(snake).dirección));
+    if(first(snake).x>=window.innerWidth)
+    {
+      return cons({x: 0 + first(snake).dirección.x,
+      y: first(snake).y + first(snake).dirección.y, 
+      dirección: dir,
+      distance: Distance(x,y,first(snake).x,first(snake).y)}, 
+      reSnake(rest(snake),first(snake).dirección,x,y));
+    }
+    if(first(snake).x<=0)
+    {
+      return cons({x: window.innerWidth + first(snake).dirección.x,
+      y: first(snake).y + first(snake).dirección.y,
+      dirección: dir,
+      distance: Distance(x,y,first(snake).x,first(snake).y)},
+      reSnake(rest(snake),first(snake).dirección,x,y));
+    }
+    if(first(snake).y>=window.innerHeight)
+    {
+      return cons({x: first(snake).x + first(snake).dirección.x,
+      y: 0 + first(snake).dirección.y,
+      dirección: dir,
+      distance: Distance(x,y,first(snake).x,first(snake).y)},
+      reSnake(rest(snake),first(snake).dirección,x,y));
+    }
+    if(first(snake).y<=0)
+    {
+      return cons({x: first(snake).x + first(snake).dirección.x,
+      y: window.innerHeight + first(snake).dirección.y,
+      dirección: dir,
+      distance: Distance(x,y,first(snake).x,first(snake).y)},
+      reSnake(rest(snake),first(snake).dirección,x,y));
+    }
+    return cons({x: first(snake).x + first(snake).dirección.x,
+    y: first(snake).y + first(snake).dirección.y,
+    dirección: dir,
+    distance: Distance(x,y,first(snake).x,first(snake).y)},
+    reSnake(rest(snake),first(snake).dirección,x,y));
   }
-  /*Contrato: last: list --> value
-  Propósito: Determinar el último elemento de una lista
-  */
   function last(list)
   {
     if(length(list)==1)
@@ -76,33 +156,140 @@
                 opposite(3)   =>  -3
                 opposite(0)   =>  0
   */
+  //Esta función resulta inecesaria, mas tengo pereza de corregirla en este momento :b
   function opposite(val)
   {
     return -val;
   }
-  /*Contrato: Distance: number, number, number, number --> number
-  Propósito: Determinar la distancia entre dos puntos en un plano cartesiano
+   /*Contrato: Distance: number, number, number, number --> number
+  Propósito: Determinar la distancia euclidiana entre dos puntos en un plano cartesiano
   Ejemplo:    Distance(-3,7,5,10) =>  8.54
   */
   function Distance(x1,y1,x2,y2)
   {
     return Redondear(Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2)));
   }
-  // Aquí establecemos la constante snake, que serán los valores iniciales de nuestra snake en el juego. Cada segmento va detrás del otro.
-  const snake=[{x: 100, y:100, dirección: {x: speed,y: 0}},{x: 100-size, y:100, dirección: {x: speed,y: 0}},{x: 100-2*size, y:100, dirección: {x: speed,y: 0}},{x: 100-3*size, y:100, dirección: {x: speed,y: 0}}]
+  /*Contrato: Movement: object, char, number, number --> object
+  Propósito: Mover al snake, cambiando sus direcciones dependiendo de los valores ingresados
+  */
+  function Movement(world,a,val1,val2)
+  {
+    if(a==="y")
+    {
+      return make(world,
+      {dirección: 
+      {y: world.dirección.y + world.twist*val1,
+      x: Redondear(Pit(world.dirección.y+val1*world.twist))*val2},
+      snake: reSnake(world.snake,world.dirección,world.snake[0].x,world.snake[0].y),
+      distance: Distance(world.snake[0].x,world.snake[0].y,world.food.x,world.food.y)});
+    }
+    else if(a==="x"){
+      return make(world,
+      {dirección:
+      {x: world.dirección.x + world.twist*val1,
+      y: Redondear(Pit(world.dirección.x+val1*world.twist))*val2},
+      snake: reSnake(world.snake,world.dirección,world.snake[0].x,world.snake[0].y),
+      distance: Distance(world.snake[0].x,world.snake[0].y,world.food.x,world.food.y)});
+    }
+    else if(a==="nothing"){
+      return make(world,
+      {snake: reSnake(world.snake,world.dirección,world.snake[0].x,world.snake[0].y),
+      distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+    }
+  }
+  // Evalúa si la serpiente se está chocacdo consigo misma
+  function selfColission(snake,head)
+  {
+    if (isEmpty(snake))
+    {
+      return false;
+    }
+    if (Distance(head.x,head.y,first(snake).x,first(snake).y)<normdistance)
+    {
+      return true;
+    }
+    return selfColission(rest(snake),head);
+  }
+  // Aquí se definen el tamaño de los segmentos, las posibles dificultades y sus velocidades y twists correspondientes
+  /* Twist: Cantidad en que aumenta o disminuye X o Y a la hora de girar.
+  Esto define qué tan rápido puede dar una vuelta completa:
+  entre más pequeño sea el valor, menos aumentan X o Y cuando se presionan las teclas,
+  y se tarda más tiempo en girar; entre más grande, más aumentan y se tarda menos.
+  */
+  const size=10;
+  const difficulty={millipede: {speed: size*0.5, twist: 1},
+                    snake: {speed: size*0.75, twist: 1.5},
+                    centipede: {speed: size, twist: 2}};
+  //La dificultad seleccionada. La velocidad y el twist del snake dependen de este valor.
+  const chosendif=difficulty.snake;
+  const speed=chosendif.speed
+  //La snake inicial, que consta de 4 segmentos en una línea horizontal uno detrás del otro.
+  const snake=[{x: 100, y:100, dirección: {x: speed,y: 0}, distance: 20},
+              {x: 100-speed, y:100, dirección: {x: speed,y: 0}, distance: 20},
+              {x: 100-2*speed, y:100, dirección: {x: speed,y: 0}, distance: 20},
+              {x: 100-3*speed, y:100, dirección: {x: speed,y: 0}, distance: 20}]
+  /*La distancia mínima de cada segmento con la cabeza del snake.
+  Si la distancia de uno de los segmentos con la cabeza es menor a
+  este valor, entendemos que la snake se está chocando con sigo misma.
+  */
+  const normdistance=Distance(snake[0].x,snake[0].y,snake[1].x,snake[1].y);
   function sketchProc(processing) {
 
     /**
      * Esto se llama antes de iniciar el juego
      */
     processing.setup = function () {
+      document.getElementById("canvas").focus();
       processing.frameRate(30);
       processing.size(window.innerWidth-20, window.innerHeight-20);
       processing.background(10, 200, 50);
-      /* Importante: El twist representa la magnitud del giro dado por la serpiente cuando se presiona izquierda o derecha.
-      Asignarle un valor muy cercano al midval() puede buguear el juego (No me pregunten cómo lo sé :p).
-      */
-      processing.state = { x: 100, y: 100, ancho: size, alto: size ,dirección: {x: speed, y:0},snake: snake,keydown:false,key:processing.LEFT,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},score: 0,twist: 1, distance: 10};
+      processing.state = {
+                          // Plump: segmento o segmentos del snake que están tragando algo
+                          plump:[-1],
+                          /* Eat: Determina si la serpiente se encuentra tragando o no.
+                          De ser verdadero, ejecuta la función "eatSnake", que veremos más
+                          adelante.
+                          */
+                          eat: false,
+                          /* Over: Determina si el juego terminó o no.
+                          De ser verdadero, la pantalla cambia a negro y aparece el mensaje
+                          "GAME OVER".
+                          */
+                          over: false,
+                          /* Kill: Determina si el juego debería terminar o no.
+                          De ser verdadero, la snake se detiene y comienza a desintegrarse lentamente.
+                          Al finalizar este proceso, over se vuelve verdadero, terminando el juego.
+                          */
+                          kill: false,
+                          /* Dirección: La dirección que toma la cabeza de la serpiente.
+                          En este proyecto, entendemos las direcciones como el número de pasos
+                          que un objeto se mueve en el eje X y Y (La dirección izquierda vendría siendo X: -C y Y:0,
+                          siendo C un número natural mayor que 0),
+                          por tanto, la dirección es un objeto con los atributos X y Y.
+                          */
+                          dirección: {x: speed, y:0},
+                          /* Snake: Nuestra snake. Como valor inicial,
+                          copia la constante previamente definida de snake
+                          */
+                          snake: snake,
+                          // Keydown: Determina si hay una tecla presionada
+                          keydown:false,
+                          // Key: Determina qué tecla está presionada, o qué tecla deja de estarlo.
+                          key:processing.LEFT,
+                          // Food: La comida, con atributos X y Y random dentro de los límites del canvas dibujado
+                          food: 
+                          {x: processing.random(50, window.innerWidth-70),
+                          y: processing.random(50, window.innerHeight-70)},
+                          // Score: El puntaje del usuario
+                          score: 0,
+                          // Twist: El twist de nuestra snake explicado previamente
+                          twist: chosendif.twist,
+                          /* Distance: La distancia entre la snake y la comida.
+                          Si este valor llega a ser menor a la suma del radio de
+                          la cabeza de la snake y el radio de la fruta, entendemos
+                          que la snake se está comiendo la fruta.
+                          */
+                          distance: 50};
       
     }
 
@@ -117,9 +304,10 @@
         switch (world.key) {
         
         // Vamos a comenzar con la izquierda, es decir, girar en sentido de las manecillas del reloj
+        
         case processing.LEFT:
         // Se evalúa si la dirección se encuentra en el primer cuadrante
-          if (world.dirección.x>0&&world.dirección.x<=speed&&world.dirección.y<=0)
+          if (world.dirección.x>0&&world.dirección.y<=0)
         {
           // Se evalúa si la dirección actual es más cercana a la derecha que hacia arriba
           if(world.dirección.y>-midval(speed))
@@ -128,82 +316,86 @@
             con Redondear(Pit()). Cabe añadir que en cada return make() se actualiza el snake con reSnake() y la distancia 
             entre la cabeza del snake y la comida con Distance().
             */
-            return make(world, {dirección: {y: world.dirección.y - world.twist,x: Redondear(Pit(world.dirección.y-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"y",-1,1);
           }
-          /* De ya no ser cierto o haber superado el midval, esta vez se comienza a alterar el X en lugar del Y según el twist, y el Y
-          se redefine según este cambio con -Redondear(Pit()) (se multiplica por -1, ya que para llegar a esta condición Y tiene que ser
+          /* De ya no ser cierto o haber superado el midval, esta vez se comienza a alterar el X en lugar del Y según 
+          el twist, y el Y se redefine según este cambio con -Redondear(Pit()) (se multiplica por -1,
+          ya que para llegar a esta condición Y tiene que ser
           un valor negativo). Nuevamente, el snake se actualiza junto con la distancia.
           */
-          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x-world.twist)),x: world.dirección.x-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"x",-1,-1);
         }
         // Se evalúa si la dirección actual es más cercana hacia arriba que a la izquierda
-        if (world.dirección.y<0&&world.dirección.y>=-speed)
+        if (world.dirección.y<0)
         {
-          /* A partir de este punto, todas las condiciones y sus returns son casi idénticas, a excepción de algunos cambios
-          entre <,>,+ y -.
+          /* A partir de este punto, todas las condiciones y sus returns son casi idénticas, 
+          a excepción de algunos cambios entre <,>,+ y -. 
+          Esta es la razón por la que cada make de cada caso se resumió en un Movement (Previamente definido arriba)
           */
           if(world.dirección.x>-midval(speed)&&world.dirección.x<=0)
           {
-            return make(world, {dirección: {x: world.dirección.x - world.twist,y: -Redondear(Pit(world.dirección.x-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"x",-1,-1);
           }
-          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y+world.twist)),y: world.dirección.y+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"y",1,-1);
         }
+        
         // Se evalúa si la dirección actual es más cercana a la izquierda que hacia abajo
-        if (world.dirección.x<0&&world.dirección.x>=-speed)
+        if (world.dirección.x<0)
         {
           if(world.dirección.y<midval(speed)&&world.dirección.y>=0)
           {
-            return make(world, {dirección: {y: world.dirección.y + world.twist,x: -Redondear(Pit(world.dirección.y+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"y",1,-1);
           }
-          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x+world.twist)),x: world.dirección.x+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"x",1,1);
         }
         // Se evalúa si la dirección actual es más cercana hacia abajo que a la derecha
-        if (world.dirección.y>0&&world.dirección.y<=speed)
+        if (world.dirección.y>0)
         {
           if(world.dirección.x<midval(speed)&&world.dirección.x>=0)
           {
-            return make(world, {dirección: {x: world.dirección.x + world.twist,y: Redondear(Pit(world.dirección.x+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"x",1,1);
           }
-          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y-world.twist)),y: world.dirección.y-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"y",-1,1);
         }
-        /* Después de finalizado el cuarto cuadrante, volvemos a la dirección inicial, por lo que ya podemos dar vueltas infinitas
-        en sentido de las manecillas del reloj
+        /* Después de finalizado el cuarto cuadrante, volvemos a la dirección inicial, 
+        por lo que ya podemos dar vueltas infinitas en sentido de las manecillas del reloj
         */
+        
         break;
         // Ahora continuamos por la derecha, es decir, en sentido contrario a las manecillas del reloj
         // Nuevamente, las condiciones y los returns son casi idénticos a los anteriores, a excepción de sus signos
         case processing.RIGHT:
-        if (world.dirección.x>0&&world.dirección.x<=speed&&world.dirección.y>=0)
+        if (world.dirección.x>0&&world.dirección.y>=0)
         {
           if(world.dirección.y<midval(speed))
           {
-            return make(world, {dirección: {y: world.dirección.y + world.twist,x: Redondear(Pit(world.dirección.y+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"y",1,1);
           }
-          return make(world, {dirección: {y: Redondear(Pit(world.dirección.x-world.twist)),x: world.dirección.x-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"x",-1,1);
         }
-        if (world.dirección.y>0&&world.dirección.y<=speed)
+        if (world.dirección.y>0)
         {
           if(world.dirección.x>-midval(speed)&&world.dirección.x<=0)
           {
-            return make(world, {dirección: {x: world.dirección.x - world.twist,y: Redondear(Pit(world.dirección.x-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"x",-1,1);
           }
-          return make(world, {dirección: {x: -Redondear(Pit(world.dirección.y-world.twist)),y: world.dirección.y-world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"y",-1,-1);
         }
-        if (world.dirección.x<0&&world.dirección.x>=-speed)
+        if (world.dirección.x<0)
         {
           if(world.dirección.y>-midval(speed)&&world.dirección.y<=0)
           {
-            return make(world, {dirección: {y: world.dirección.y - world.twist,x: -Redondear(Pit(world.dirección.y-world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"y",-1,-1);
           }
-          return make(world, {dirección: {y: -Redondear(Pit(world.dirección.x+world.twist)),x: world.dirección.x+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"x",1,-1);
         }
-        if (world.dirección.y<0&&world.dirección.y>=-speed)
+        if (world.dirección.y<0)
         {
           if(world.dirección.x<midval(speed)&&world.dirección.x>=0)
           {
-            return make(world, {dirección: {x: world.dirección.x + world.twist,y: -Redondear(Pit(world.dirección.x+world.twist))}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+            return Movement(world,"x",1,-1);
           }
-          return make(world, {dirección: {x: Redondear(Pit(world.dirección.y+world.twist)),y: world.dirección.y+world.twist}, snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+          return Movement(world,"y",1,1);
         }
           break;
        
@@ -211,7 +403,7 @@
       }
       }
       // En caso de que no esté presionada ni izquierda ni derecha, la snake simplemente avanzará.
-      return make(world, {snake: reSnake(world.snake,world.dirección), distance: Distance(world.snake[0].x,world.snake[0].y, world.food.x,world.food.y)});
+      return Movement(world,"nothing",null,null);
       
     }
 
@@ -222,36 +414,37 @@
       switch(keyCode)
       {
         case processing.UP:
-          //El loop() que les mencioné anteriormente. Comienza a ejecutar indefinidamente la función draw()
+        //El loop() que les mencioné anteriormente. Comienza a ejecutar indefinidamente la función draw()
           processing.loop();
           return make(world, {});
           break;
         case processing.DOWN:
-          processing.textSize(100)
-          processing.text("PAUSE", window.innerWidth/3, window.innerHeight/2);
-          //De forma similar, el noLoop() detiene el draw()
+        //De forma similar, el noLoop() detiene el draw()
           /*La razón por la cual arriba es "Play" y abajo "Pause" es pura coincidencia, producto del testeo.
           Más tarde decidiremos un botón para detener y continuar el juego
           */
+          processing.textSize(100)
+          processing.text("PAUSE", window.innerWidth/3, window.innerHeight/2);
           processing.noLoop();
           return make(world, {});
           break;
-          case 107:
-          return make(world, { alto: world.alto + size });
-          break;
-        case 109:
-          return make(world, { alto: world.alto - size });
-          break;
         case 32:
-          /* Cuando la tecla 32 (la barra espaciadora) es presionada, se añade un nuevo segmento al snake después del último segmento
-          (la cola). Para ello, se redefine el snake del world con un append de la nueva cola, que se posiciona en las direcciones
-          opuestas de esta (aquí es donde entra en juego el opposite), pero adquiere sus direcciones.
-          Este botón ejemplifica el crecimiento de la serpiente. No es necesario en el juego pues ya se implementó con la comida.
+        /* Cuando la tecla 32 (la barra espaciadora) es presionada, se añade un nuevo segmento al snake 
+        después del último segmento (la cola). Para ello, se redefine el snake del world con un append 
+        de la nueva cola, que se posiciona en las direcciones opuestas de esta (aquí es donde entra en 
+        juego el opposite), pero adquiere sus direcciones. Este botón ejemplifica el crecimiento de la serpiente. 
+        No es necesario en el juego pues ya se implementó con la comida.
           Pueden borrarlo cuando lo consideren pertinente.
           */
-          return make(world, {snake: append(world.snake,[{x: last(world.snake).x+opposite(last(world.snake).dirección.x), y:last(world.snake).y+opposite(last(world.snake).dirección.y), dirección: last(world.snake).dirección}])})
+          return make(world, 
+          {snake: 
+          append(world.snake,
+          [{x: last(world.snake).x+opposite(last(world.snake).dirección.x),
+          y:last(world.snake).y+opposite(last(world.snake).dirección.y),
+          dirección: last(world.snake).dirección}])});
         default:
-        //Para evitar el delay, cuando una tecla se presiona, el valor de keydown cambia a true y el key a la tecla presionada
+        /*Para evitar el delay, cuando una tecla se presiona, el valor de keydown cambia a 
+        true y el key a la tecla presionada*/
         return make(world, {keydown: true, key:keyCode});
       }
       
@@ -259,38 +452,216 @@
     // Esta función dibuja un determinado segmento del snake
      processing.drawSnake = function (item)
   {
+    //En caso de que la snake se esté desintegrando, los segmentos cambian de color a gris
+    if(!processing.state.kill)
+    {
+    processing.fill(245, 140, 42);
+  }
+  //En caso contrario, mantienen su color anaranjado
+  else{
+    processing.fill(158, 155, 147);
+  }
+  //Independientemente del caso se dibujan los segmentos
     processing.ellipse(item.x,item.y,size,size);
   }
-  //Retorna la tecla soltada y determina que ya no hay teclas presionadas
+  /* Esta función dibuja un determinado segmento del snake cuando éste está comiendo.
+  Está basada en la función anterior
+  */
+  processing.eatSnake = function(item,index,array)
+  {
+    if(!processing.state.kill)
+    {
+    processing.fill(245, 140, 42);
+  }
+  else{
+    processing.fill(158, 155, 147);
+  }
+  // Evalúa si el índice del segmento actual está contenido en la lista de índices que están tragando
+    if(contain(index,processing.state.plump))
+    {
+      //Evalúa si este segmento es el último
+      if(index==length(array)-1)
+      {
+        //Evalúa si aún quedan más segmentos tragando después de éste
+        if(length(processing.state.plump)>1)
+        {
+          //De ser cierto, elimina el índice actual de la lista de índices tragando
+          processing.state = make(processing.state, {plump: rest(processing.state.plump)});
+        }
+        else{
+          /*En caso contrario (no hay más segmentos tragando), redefine la lista de índices tragando a [-1]
+          y finaliza el proceso de digestión
+          */
+          processing.state = make(processing.state, {plump: [-1],eat: false});
+        }
+        /* Independientemente del caso, dibuja el segmento con un tamaño normal y repite el proceso realizado
+        cuando se presiona la barra espaciadora (case 32) para crecer
+        */
+        processing.ellipse(item.x,item.y,size,size);
+      processing.state = make(processing.state,
+      {snake: 
+      append(processing.state.snake,
+      [{x: last(processing.state.snake).x+opposite(last(processing.state.snake).dirección.x),
+      y:last(processing.state.snake).y+opposite(last(processing.state.snake).dirección.y),
+      dirección: last(processing.state.snake).dirección,
+      distance: 0}])});
+      }
+      //Si éste no es el último segmento
+      else{
+      /*Dibuja el segmento inflado, con un diámetro dependiente del número de segmentos que falten para
+      finalizar la digestión.
+      */
+      processing.ellipse(item.x,item.y,
+      size*1.5-(index*size*0.5)/length(array),
+      size*1.5-(index*size*0.5)/length(array));
+      }
+      
+    }
+    //Si el índice del segmento no está contenido en la lista de segmentos tragando
+    else{
+      //Dibuja el segmento con dimensiones normales
+    processing.ellipse(item.x,item.y,size,size);
+    }
+  }
+  //Esta función desaparece al snake segmento por segmento. Se ejecuta cuando pierde el juego.
+  processing.desintegrate = function (world)
+  { 
+    //Si al snake sólo le queda su cabeza
+    if (length(world.snake)==1)
+    {
+      //Se termina el juego
+      processing.state = make(world, {over: true});
+    }
+    else{
+      /*En el caso contrario, se elimina la última cola del snake y se llama al loop,
+      para evitar posibles atascos en el proceso
+      */
+    processing.state = make(world, {snake: restLast(world.snake)});
+    processing.loop();
+    }
+    
+    //Esta función detiene al snake sin detener el draw (igualando su velocidad a 0)
+  }
+  processing.stop = function (item)
+  {
+    return make(item, {dirección: {x: 0,y: 0}});
+  }
+  //Esta función revisa si ya existe un Mejor Puntaje en el navegador actual
+  processing.check = function (key)
+  {
+    if (window.localStorage.getItem(key)==null)
+    {
+      //En el caso contrario, lo crea y lo iguala a 0
+      window.localStorage.setItem(puntdif(),"0");
+    }
+  }
+ 
+   //Retorna la tecla soltada y determina que ya no hay teclas presionadas
   //Para más información de esta función, revisar su definición al final
   processing.offKeyEvent = function (world, keyCode){
     return make(world, {keydown: false, key:keyCode});
   }
 
     // Dibuja algo en el canvas. Aqui se pone todo lo que quieras pintar
-    // La función del txt no es más que probar que ciertos valores estén funcionando correctamente con text(). No es necesario en el juego
     processing.drawGame = function (world, txt) {
-      processing.background(10, 200, 50);
+      //Antes de cualquier cosa, revisamos si existe un Mejor Puntaje
+      processing.check(puntdif());
+      //Revisamos si el Puntaje actual es mayor al Mejor Puntaje
+      if (world.score>parseInt(window.localStorage.getItem(puntdif())))
+      {
+        //De ser cierto, redefinimos el Mejor Puntaje al Puntaje actual
+        window.localStorage.setItem(puntdif(),""+world.score);
+      }
+      //Si el juego aún no ha terminado (si debería seguir ejecutandose)
+      if (world.over==false)
+      {
+        processing.background(10, 200, 50);
       processing.fill(240, 240, 240);
-      /*Atención a este if. Se activa cuando la distancia entre la cabeza de la serpiente y la comida es inferior a sus diámetros
-      (cuando se la está "comiendo")
+      processing.state = make(world, {})
+      /*Si algún segmento de la serpiente está chocando con la cabeza y aún no se ha dado la orden de iniciar
+      el proceso de desintegración*/
+      if (selfColission(rest(world.snake),world.snake[0])&&world.kill==false)
+      {
+        //De ser cierto, cancela el proceso de digestión, detiene al snake, e inicia a desintegrarla dentro de 1 segundo
+        processing.state = make(world, {eat: false,snake: world.snake.map(processing.stop), dirección: {x: 0, y: 0}});
+        setTimeout(function(){processing.state=make(world, {kill: true})}, 1000);
+      }
+      /*Atención a este if. Se activa cuando la distancia entre la cabeza de la serpiente y la comida es 
+      inferior a sus diámetros (cuando se la está "comiendo")
       */
-      if (world.distance<size)
+      if (world.distance<=size*2)
       {
         /* El return generado por este make es interesante, pues cumple 3 funciones a la vez:
         1) Aumentar el score en 100
         2) Reubicar a la comida en una posición aleatoria
-        3) Aumentar el tamaño de la serpiente. Se usa el mismo código que con la barra espaciadora.
+        3) Activar el proceso de digestión para posteriormente generar una nueva cola.
         */
-        processing.state = make(world, {score:world.score+100,food: {x: processing.random(50, window.innerWidth-70) ,y: processing.random(50, window.innerHeight-70)},distance: 10,snake: append(world.snake,[{x: last(world.snake).x+opposite(last(world.snake).dirección.x), y:last(world.snake).y+opposite(last(world.snake).dirección.y), dirección: last(world.snake).dirección}])});
+        processing.state = make(world,
+        {eat: true,
+        score:world.score+100,
+        food: 
+        {x: processing.random(50, window.innerWidth-70),
+        y: processing.random(50, window.innerHeight-70)},
+        distance: 10});
       }
-      //Con el forEach(drawSnake), se dibuja cada segmento del snake, independientemente de la cantidad de éstos.
+      //Si se ha dado la orden para desintegrar al snake
+      if (world.kill)
+      {
+          processing.desintegrate(world);
+      }
+      //Si se ha dado la orden para digerir
+      if(world.eat)
+      {
+        //Se le suma 1 a todos los índices de los segmentos tragando y llama al eatSnake para todo el snake
+        processing.state = make(world,{plump: world.plump.map((x)=> x+1)});
+        world.snake.forEach(processing.eatSnake);
+        /*Debido a un aparente bug del canvas, parece que cuando la snake está digiriendo se atasca en este if (world.eat)
+        y algunos casos fuera de éste no funcionan correctamente. Para evitar esto, se reevalúan en este if también
+        */
+        if (selfColission(rest(world.snake),world.snake[0])&&world.kill==false)
+      {
+        processing.state = make(world, {eat: false,snake: world.snake.map(processing.stop), dirección: {x: 0, y: 0}});
+        processing.fill(158, 155, 147)
+        setTimeout(function(){processing.state=make(world, {kill: true})}, 1000);
+      }
+      if (world.distance<=size*2)
+      {
+        processing.state = make(world,
+        {plump: invertir(cons(-1,invertir(world.plump))),
+        score:world.score+100,
+        food: 
+        {x: processing.random(50, window.innerWidth-70),
+        y: processing.random(50, window.innerHeight-70)},
+        distance: 10});
+
+      }
+      
+        
+      }
+      //Si la serpiente no está tragando
+      else{
       world.snake.forEach(processing.drawSnake);
-      //Se dibuja la comida
-      processing.ellipse(world.food.x,world.food.y,size,size);
+      }
+      /* Se dibuja la comida, el Puntaje y el Mejor Puntaje
+      El tercer texto que se dibuja es útil para probar el funcionamiento de las constantes y atributos,
+      y verificar que estén funcionando correctamente. Se eliminará a la hora de exponer el snake.
+      */
+      processing.fill(245, 42, 42);
+      processing.ellipse(world.food.x,world.food.y,size*3,size*3);
+      processing.textSize(20)
       processing.text(txt, 50, 200);
-      //Se dibuja el "SCORE"
-      processing.text("SCORE: "+world.score, 10, 10);
+      processing.text("SCORE: "+world.score, 10, 30);
+      processing.text("BEST SCORE: "+window.localStorage.getItem(puntdif()), 10, 70);
+      }
+      //En caso de que el juego haya terminado
+      else
+      {
+        setTimeout(function(){
+        processing.background(0,0,0);
+        processing.textSize(150)
+          processing.text("GAME OVER", window.innerWidth/6, window.innerHeight/2);
+        },500);
+      }
       
     }
 
@@ -298,16 +669,21 @@
     // Esta es la función que pinta todo. Se ejecuta 60 veces por segundo. 
     // No cambie esta función. Su código debe ir en drawGame
     processing.draw = function () {
-      processing.drawGame(processing.state, processing.state.distance);
+      processing.drawGame(processing.state, processing.state.plump);
       processing.state = processing.onTic(processing.state);
     };
 
     // Esta función se ejecuta cada vez que presionamos una tecla. 
     // No cambie esta función. Su código debe ir en onKeyEvent
     processing.keyPressed = function () {
+      //En caso de que el juego no haya terminado. De no ser cierto, no debería seguir escuchando las órdenes del teclado
+      //Esta característica es temporal mientras desarrollamos una interfaz y un menú cuando el juego termine
+      if (!processing.state.over)
+      {
       processing.state = processing.onKeyEvent(processing.state, processing.keyCode);
+      }
     }
-    // Esta es una parodia de la función keyPressed, cuyo fin es determinar cuando se suelta una tecla y cuál se soltó.
+     // Esta es una parodia de la función keyPressed, cuyo fin es determinar cuando se suelta una tecla y cuál se soltó.
     processing.keyReleased = function () {
       processing.state = processing.offKeyEvent(processing.state, processing.keyCode);
     }
