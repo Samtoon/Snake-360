@@ -745,7 +745,7 @@ if (length(world.snake)==1)
       //Si el juego aún no ha terminado (si debería seguir ejecutandose)
       if (world.over==false)
       {
-        processing.image(world.stage,0,0,window.innerWidth,window.innerHeight);
+      processing.image(world.stage,0,0,window.innerWidth,window.innerHeight);
       processing.fill(240, 240, 240);
       processing.state = make(world, {})
       /*Si algún segmento de la serpiente está chocando con la cabeza y aún no se ha dado la orden de iniciar
