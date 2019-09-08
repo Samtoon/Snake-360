@@ -47,29 +47,29 @@
     }
     // Esta función se ejecuta cada vez movemos el mouse. 
     // No cambie esta función. Su código debe ir en onKeyEvent
-    procesing.mouseMoved = function() {
+    processing.mouseMoved = function() {
       processing.state = processing.onMouseEvent(processing.state, 
       {action: "move", mouseX: processing.mouseX, mouseY: processing.mouseY});
     }
 
     // Estas funciones controlan los eventos del mouse. 
     // No cambie estas funciones. Su código debe ir en OnMouseEvent
-    processi.mouseClicked = function() {
+    processing.mouseClicked = function() {
       processing.state = processing.onMouseEvent(processing.state, 
       {action: "click", mouseX: processing.mouseX, mouseY: processing.mouseY, mouseButton: processing.mouseButton});
     } 
 
-    processi.mouseDragged = function() {
+    processing.mouseDragged = function() {
       processing.state = processing.onMouseEvent(processing.state, 
       {action: "drag", mouseX: processing.mouseX, mouseY: processing.mouseY, mouseButton: processing.mouseButton});
     }
 
-    processi.mousePressed = function() {
+    processing.mousePressed = function() {
       processing.state = processing.onMouseEvent(processing.state, 
       {action: "press", mouseX: processing.mouseX, mouseY: processing.mouseY, mouseButton: processing.mouseButton});
     }
 
-    processi.mouseReleased = function() {
+    processing.mouseReleased = function() {
       processing.state = processing.onMouseEvent(processing.state, 
       {action: "release", mouseX: processing.mouseX, mouseY: processing.mouseY, mouseButton: processing.mouseButton});
     }

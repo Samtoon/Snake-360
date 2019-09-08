@@ -1,3 +1,16 @@
+<head>
+  <style>
+    @font-face {
+    font-family: 'Retro Gaming';
+    src: url('RetroGaming.woff2') format('woff2'),
+        url('RetroGaming.woff') format('woff'),
+        url('RetroGaming.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+    </style>
+    
+</head>
 <canvas id="canvas" width="300" height="300"></canvas>
 <script src="web-lib/processing.js"></script>
 <script src="web-lib/functional-light.js"></script>
@@ -256,6 +269,7 @@
       processing.size(window.innerWidth-20, window.innerHeight-20);
       processing.background(10, 200, 50);
       processing.state = {
+                          stage: processing.loadImage("web-lib/wallpaper.gif"),
                           player1:{// Plump: segmento o segmentos del snake que están tragando algo
                           plump:[],
                           /* Eat: Determina si la serpiente se encuentra tragando o no.
@@ -470,7 +484,9 @@
     * Actualiza el mundo cada vez que se oprime una tecla. Retorna el nuevo stado del mundo
     */
     processing.onKeyEvent = function (world, keyCode) {
-      switch(keyCode)
+      if (!world.over)
+      {
+        switch(keyCode)
       {
         case processing.UP:
         //El loop() que les mencioné anteriormente. Comienza a ejecutar indefinidamente la función draw()
@@ -499,6 +515,16 @@
           break;
         default:
           return make(world, {});
+<<<<<<< HEAD
+=======
+      }
+      }
+      else{
+        if (keyCode==processing.ENTER)
+        {
+          return window.open("interfazprueba.html","_self");
+        }
+>>>>>>> Interfaz
       }
       
     }
@@ -719,7 +745,7 @@ if (length(world.snake)==1)
       //Si el juego aún no ha terminado (si debería seguir ejecutandose)
       if (world.over==false)
       {
-        processing.background(10, 200, 50);
+        processing.image(world.stage,0,0,window.innerWidth,window.innerHeight);
       processing.fill(240, 240, 240);
       processing.state = make(world, {})
       /*Si algún segmento de la serpiente está chocando con la cabeza y aún no se ha dado la orden de iniciar
@@ -936,6 +962,7 @@ if (isEmpty(world.player2.plump))
       processing.fill(245, 42, 42);
       processing.ellipse(world.food.x,world.food.y,size*3,size*3);
       processing.textSize(20)
+      processing.textFont(processing.createFont("Retro Gaming"))
       processing.text(txt, 50, 200);
       processing.text("SCORE: "+world.player1.score, 10, 30);
       processing.text("BEST SCORE: "+window.localStorage.getItem(puntdif()), 10, 70);
@@ -965,10 +992,9 @@ if (isEmpty(world.player2.plump))
     processing.keyPressed = function () {
       //En caso de que el juego no haya terminado. De no ser cierto, no debería seguir escuchando las órdenes del teclado
       //Esta característica es temporal mientras desarrollamos una interfaz y un menú cuando el juego termine
-      if (!processing.state.over)
-      {
+      
       processing.state = processing.onKeyEvent(processing.state, processing.keyCode);
-      }
+      
     }
      // Esta es una parodia de la función keyPressed, cuyo fin es determinar cuando se suelta una tecla y cuál se soltó.
     processing.keyReleased = function () {
