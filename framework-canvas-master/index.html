@@ -6,10 +6,16 @@
 
   // Importamos las librerias
   let { append, cons, first, isEmpty, isList, length, rest } = functionalLight;
-
-
+  function last(list)
+  {
+    if (length(list)==1)
+    {
+      return list;
+    }
+    return last(rest(list))
+  }
   const mySnake = [{ x: 3, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 1 }];
-  const game = { snake: mySnake, direction: 'RIGHT', food: [{ x: 5, y: 5 }], score: 0 }
+  var game = { snake: mySnake, direction: 'RIGHT', food: [{ x: 5, y: 5 }], score: 0, border: [] }
   const dx = 50;
   const dy = 50;
 
@@ -19,7 +25,8 @@
      * Esto se llama antes de iniciar el juego
      */ 
     processing.setup = function () {
-      processing.size(400, 400);
+      processing.frameRate(30)
+      processing.size(500, 600);
       processing.background(10, 200, 50);
     }
 
@@ -49,12 +56,67 @@
        */
       function drawScore(score) {
         processing.textFont(processing.PFont, 18);
-        processing.text("Score: " + score, 10, 380); 
+        processing.text("Score: " + game.border.length, 10, 380); 
       }
 
+      function drawBorders(border)
+      {
+        border.forEach(part => {
+          processing.fill(processing.random(255),processing.random(255),processing.random(255))
+          processing.rect(part.x,part.y,10,10)
+        })
+      }
+      function setBorders(border)
+      {
+        game.border=[{x: 490,y: 240,size:1},{x: 490,y: 230,size:2}];
+      }
+      function buildBorders(border)
+      {
+        if (game.border[0].x!=last(game.border).x&&game.border[0].y!=last(game.border).y)
+        {
+          
+          if(border[0].x==490&&border[0].y>0&&border[0].y<250)
+          {
+            game.border=cons({x: border[0].x, y: border[0].y-10,size: border[0].size+1},border);
+          }
+          else if(border[0].x>0&&border[0].y==0)
+          {
+            game.border=cons({x: border[0].x-10, y: border[0].y,size: border[0].size+1},border);
+          }
+          else if(border[0].x==0&&border[0].y<490)
+          {
+            game.border=cons({x: border[0].x, y: border[0].y+10,size: border[0].size+1},border);
+          }
+          else if(border[0].x<490&&border[0].y==490)
+          {
+            game.border=cons({x: border[0].x+10, y: border[0].y,size: border[0].size+1},border);
+          }
+          else if(border[0].x==490&&border[0].y>249)
+          {
+            game.border=cons({x: border[0].x, y: border[0].y-10,size: border[0].size+1},border);
+          }
+        }
+        
+      }
+
+      processing.background(0,255,0)
       drawSnake(game.snake);
       drawFood(game.food);
       drawScore(game.score);
+      if (length(game.border)<2)
+      {
+        setBorders(game.border);
+      }
+      if(length(game.border)<197)
+      {
+      buildBorders(game.border);
+      }
+      processing.println(game.border.length);
+      
+      
+      drawBorders(game.border);
+      processing.text(game.border[0].y,100,300)
+      
     };
   }
 

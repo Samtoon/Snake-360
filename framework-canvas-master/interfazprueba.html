@@ -31,19 +31,23 @@
     processing.setup = function () {
       document.getElementById("canvas").focus();
       processing.frameRate(60);
-      processing.size(800, 400);
+      processing.size(window.innerWidth-20, window.innerHeight-20);
       processing.background(10, 200, 50);
       
       MyFont = processing.createFont("Retro Gaming");
       processing.state = {title: {rgb: [0,255,0],font: processing.createFont("Retro Gaming")},frame: 0, play: true,
-      sound: new buzz.sound("web-lib/s1",{formats: ["mp3"],autoplay: true,preload: true})};
+      sound: new buzz.sound("web-lib/s1",{formats: ["mp3"],autoplay: true,preload: true,volume: 50}),
+      select: new buzz.sound("web-lib/menu_select",{formats: ["mp3"]}),
+      move: new buzz.sound("web-lib/menu_move",{formats: ["mp3"],volume: 100}),
+
+       state: "opening", selection: 1, limit: 1};
     }
     /**
     * Actualiza el mundo en cada tic del reloj. Retorna el nuevo stado del mundo
     */
     processing.onTic = function (world) {
       
-      if (world.frame<30)
+      if (world.frame<27)
       {
       return make(world, {title: make(world.title,{rgb: titlecolor(world.title.rgb)}),frame: world.frame+1,play: true});
       }
@@ -81,9 +85,46 @@
     * Actualiza el mundo cada vez que se oprime una tecla. Retorna el nuevo stado del mundo
     */
     processing.onKeyEvent = function (world, keyCode) {
-      if(keyCode==processing.ENTER)
+      switch(keyCode)
       {
+        case processing.ENTER:
+        world.select.play();
+        switch(world.state)
+        {
+          case "opening":
+
+           return make(world,{state: "main menu",limit: 2});
+           break;
+          case "main menu":
+            switch (world.selection)
+            {
+              case 1:
+                return make(world,{})
+                break;
+              case 2:
+                window.open("movement.html","_self");
+            }
+            break;
+        }
         window.open("movement.html","_self")
+        break;
+        case processing.LEFT:
+        world.move.play();
+          if(world.selection<=1)
+          {
+            return make(world,{selection: world.limit})
+          }
+          return make(world,{selection: world.selection-1})
+        break;
+        
+        case processing.RIGHT:
+        world.move.play();
+          if(world.selection>=world.limit)
+          {
+            return make(world,{selection: 1})
+          }
+          return make(world,{selection: world.selection+1})
+        break;
       }
       return make(world,{});
     }
@@ -92,28 +133,65 @@
       processing.background(0, 0, 0);
       processing.fill(world.title.rgb[0], world.title.rgb[1], world.title.rgb[2]);
       var fontList = PFont.list();
-      processing.println(fontList);
-      processing.textFont(world.title.font);
-      processing.textSize(70);
-      processing.textAlign(processing.CENTER);
-      processing.text("SNAKE EVOLUTION",400,100);
-      if(world.frame<15)
-      {
-        processing.fill(255,255,255)
-      }
-      else{
-        processing.fill(255,255,0)
-      }
       
-      processing.textSize(30)
-      processing.text("PLAY",400,300)
-      processing.fill(255,255,255)
-      processing.textSize(10)
-      processing.text(world.sound.isPaused()+","+world.play,730,390);
-      if(world.play)
+      processing.textFont(world.title.font);
+      processing.textSize(window.innerHeight/90*window.innerWidth/90);
+      processing.textAlign(processing.CENTER,processing.CENTER);
+      processing.text("SNAKE EVOLUTION",(window.innerWidth-20)/2,(window.innerHeight-20)/4);
+      switch (world.state)
       {
-        world.sound.play();
+        case "opening":
+          if(world.frame<13.5)
+          {
+            processing.fill(255,255,255)
+          }
+          else{
+            processing.fill(255,255,0)
+          }
+          processing.textSize(window.innerHeight/120*window.innerWidth/120)
+          processing.text("PLAY",window.innerWidth/2,window.innerHeight*2/3)
+          break;
+        case "main menu":
+          switch (world.selection)
+          {
+            case 1:
+            if(world.frame<13.5)
+          {
+            processing.fill(255,255,255)
+          }
+          else{
+            processing.fill(255,255,0)
+          }
+          processing.textSize(window.innerHeight/120*window.innerWidth/120)
+          processing.text("ALIEN\nVS\nSNAKE",window.innerWidth/3,window.innerHeight*2/3)
+          processing.fill(255,255,255)
+          processing.textSize(window.innerHeight/120*window.innerWidth/120)
+          processing.text("GALAXY\n\SNAKE",window.innerWidth*2/3,window.innerHeight*2/3)
+          break;
+          case 2:
+          processing.fill(255,255,255)
+          processing.textSize(window.innerHeight/120*window.innerWidth/120)
+          processing.text("ALIEN\nVS\nSNAKE",window.innerWidth/3,window.innerHeight*2/3)
+          
+          if(world.frame<13.5)
+          {
+            processing.fill(255,255,255)
+          }
+          else{
+            processing.fill(255,255,0)
+          }
+          processing.textSize(window.innerHeight/120*window.innerWidth/120)
+          processing.text("GALAXY\n\SNAKE",window.innerWidth*2/3,window.innerHeight*2/3)
+          break;
+          }
+          
+          break;
       }
+      processing.fill(255,255,255)
+      processing.textSize(window.innerHeight/32)
+      processing.textAlign(processing.CENTER);
+      processing.text("©NOOB GAMES 2019",(window.innerWidth-20)*9/10,(window.innerHeight-20)*99/100);
+      world.sound.play();
       
     }
     // Esta es la función que pinta todo. Se ejecuta 60 veces por segundo. 

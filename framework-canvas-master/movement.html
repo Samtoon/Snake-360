@@ -13,6 +13,7 @@
 </head>
 <canvas id="canvas" width="300" height="300"></canvas>
 <script src="web-lib/processing.js"></script>
+<script src="web-lib/buzz.min.js"></script>
 <script src="web-lib/functional-light.js"></script>
 <script>
   //Vamos a usar http://processingjs.org/
@@ -61,6 +62,14 @@
     return contain(x,(rest(list)));
   }
   //Elimina el último elemento de una lista
+  function fade(music)
+  {
+    if (music.getVolume()<=0)
+    {
+      music.stop();
+    }
+    music.decreaseVolume(1);
+  }
   function restLast(list)
   {
     if(length(list)==1)
@@ -249,10 +258,14 @@
   const chosendif=difficulty.snake;
   const speed=chosendif.speed
   //La snake inicial, que consta de 4 segmentos en una línea horizontal uno detrás del otro.
-  const snake=[{x: 100, y:100, dirección: {x: speed,y: 0}, distance: 20},
+  const snake2=[{x: 100, y:100, dirección: {x: speed,y: 0}, distance: 20},
               {x: 100-speed, y:100, dirección: {x: speed,y: 0}, distance: 20},
               {x: 100-2*speed, y:100, dirección: {x: speed,y: 0}, distance: 20},
               {x: 100-3*speed, y:100, dirección: {x: speed,y: 0}, distance: 20}]
+  const snake=[{x: window.innerWidth-100, y:100, dirección: {x: -speed,y: 0}, distance: 20},
+              {x: window.innerWidth-100+speed, y:100, dirección: {x: -speed,y: 0}, distance: 20},
+              {x: window.innerWidth-100+2*speed, y:100, dirección: {x: -speed,y: 0}, distance: 20},
+              {x: window.innerWidth-100+3*speed, y:100, dirección: {x: -speed,y: 0}, distance: 20}]
   /*La distancia mínima de cada segmento con la cabeza del snake.
   Si la distancia de uno de los segmentos con la cabeza es menor a
   este valor, entendemos que la snake se está chocando con sigo misma.
@@ -269,6 +282,7 @@
       processing.size(window.innerWidth-20, window.innerHeight-20);
       processing.background(10, 200, 50);
       processing.state = {
+                          sound: new buzz.sound("web-lib/s2",{formats: ["mp3"],autoplay: true,preload: true}),
                           stage: processing.loadImage("web-lib/wallpaper.gif"),
                           player1:{// Plump: segmento o segmentos del snake que están tragando algo
                           plump:[],
@@ -288,7 +302,7 @@
                           siendo C un número natural mayor que 0),
                           por tanto, la dirección es un objeto con los atributos X y Y.
                           */
-                          dirección: {x: speed, y:0},
+                          dirección: {x: -speed, y:0},
                           /* Snake: Nuestra snake. Como valor inicial,
                           copia la constante previamente definida de snake
                           */
@@ -330,7 +344,7 @@
                           /* Snake: Nuestra snake. Como valor inicial,
                           copia la constante previamente definida de snake
                           */
-                          snake: snake,
+                          snake: snake2,
                           // Keydown: Determina si hay una tecla presionada
                           keydown:false,
                           // Key: Determina qué tecla está presionada, o qué tecla deja de estarlo.
@@ -499,7 +513,9 @@
           Más tarde decidiremos un botón para detener y continuar el juego
           */
           processing.textSize(100)
-          processing.text("PAUSE", window.innerWidth/3, window.innerHeight/2);
+          processing.textAlign(processing.CENTER)
+          processing.fill(255,0,255);
+          processing.text("PAUSE", (window.innerWidth-20)/2, (window.innerHeight-20)/2);
           processing.noLoop();
           return make(world, {});
           break;
@@ -533,7 +549,17 @@
     //En caso de que la snake se esté desintegrando, los segmentos cambian de color a gris
     if(!player.kill)
     {
-    processing.fill(245, 140, 42);
+      if(player===processing.state.player1)
+    {
+    processing.fill(255, 0, 125);
+    }
+    else if(player===processing.state.player2)
+    {
+      processing.fill(125, 0, 255);
+    }
+    else{
+      processing.fill(255,0,255)
+    }
   }
   //En caso contrario, mantienen su color anaranjado
   else{
@@ -551,7 +577,7 @@
   {
     if(!processing.state.player2.kill)
     {
-    processing.fill(245, 140, 42);
+    processing.fill(125, 0, 255);
   }
   else{
     processing.fill(158, 155, 147);
@@ -607,7 +633,7 @@
   {
     if(!processing.state.player1.kill)
     {
-    processing.fill(245, 140, 42);
+    processing.fill(255, 0, 125);
   }
   else{
     processing.fill(158, 155, 147);
@@ -731,6 +757,7 @@ if (length(world.snake)==1)
 
     // Dibuja algo en el canvas. Aqui se pone todo lo que quieras pintar
     processing.drawGame = function (world, txt) {
+      world.sound.play();
       //Antes de cualquier cosa, revisamos si existe un Mejor Puntaje
       processing.check(puntdif());
       //Revisamos si el Puntaje actual es mayor al Mejor Puntaje
@@ -806,10 +833,12 @@ if (length(world.snake)==1)
       if (world.player1.kill)
       {
           processing.desintegrate(world.player1);
+          fade(world.sound);
       }
       if (world.player2.kill)
       {
           processing.desintegrate(world.player2);
+          fade(world.sound);
       }
       //Si se ha dado la orden para digerir
       if(world.player1.eat||world.player2.eat)
@@ -956,21 +985,54 @@ if (isEmpty(world.player2.plump))
       El tercer texto que se dibuja es útil para probar el funcionamiento de las constantes y atributos,
       y verificar que estén funcionando correctamente. Se eliminará a la hora de exponer el snake.
       */
-      processing.fill(245, 42, 42);
+      processing.fill(0, 255,0);
       processing.ellipse(world.food.x,world.food.y,size*3,size*3);
-      processing.textSize(20)
+      processing.textSize(30)
       processing.textFont(processing.createFont("Retro Gaming"))
-      processing.text(txt, 50, 200);
-      processing.text("SCORE: "+world.player1.score, 10, 30);
-      processing.text("BEST SCORE: "+window.localStorage.getItem(puntdif()), 10, 70);
+      processing.fill(0,0,255)
+      processing.textAlign(processing.LEFT,processing.TOP);
+      processing.text(world.player2.score, 0,0);
+      processing.fill(255,0,255);
+      processing.textAlign(processing.CENTER,processing.TOP);
+      processing.text("BEST SCORE: "+window.localStorage.getItem(puntdif()), (window.innerWidth-20)/2, 0);
+      processing.fill(255,0,0);
+      processing.textAlign(processing.RIGHT,processing.TOP)
+      processing.text(world.player1.score,window.innerWidth-20,0)
       }
       //En caso de que el juego haya terminado
       else
       {
+        fade(world.sound);
         setTimeout(function(){
         processing.background(0,0,0);
-        processing.textSize(150)
-          processing.text("GAME OVER", window.innerWidth/6, window.innerHeight/2);
+        processing.textSize(window.innerWidth/100*window.innerHeight/50)
+        processing.textAlign(processing.CENTER,processing.CENTER);
+        if (world.player1.kill&&!world.player2.kill)
+        {
+          processing.fill(0,0,255)
+          processing.text("BLUE PLAYER\nWINS", (window.innerWidth-2)/2, (window.innerHeight-2)/2)
+        }
+        else if(world.player2.kill&&!world.player1.kill)
+        {
+          processing.fill(255,0,0)
+          processing.text("RED PLAYER\nWINS", (window.innerWidth-2)/2, (window.innerHeight-2)/2)
+        }
+        else if (world.player1.score>world.player2.score)
+        {
+          processing.fill(255,0,0)
+          processing.text("RED PLAYER\nWINS", (window.innerWidth-2)/2, (window.innerHeight-2)/2)
+        }
+        else if(world.player2.score>world.player1.score)
+        {
+          processing.fill(0,0,255);
+          processing.text("BLUE PLAYER\nWINS", (window.innerWidth-2)/2, (window.innerHeight-2)/2)
+        }
+        else
+        {
+          processing.fill(255,0,255);
+          processing.text("GAME OVER", (window.innerWidth-2)/2, (window.innerHeight-2)/2)
+        }
+          ;
         },500);
       }
       
